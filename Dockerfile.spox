@@ -1,0 +1,24 @@
+FROM ubuntu:22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TIME_ZONE=Asia/Shanghai
+RUN apt update -y && \
+    apt install -y apt-transport-https ca-certificates curl git && \
+    apt install -y inetutils-ping net-tools openssh-server telnet tzdata vim && \
+    ln -snf /usr/share/zoneinfo/$TIME_ZONE /etc/localtime && echo $TIME_ZONE > /etc/timezone && \
+    echo "dash dash/sh boolean false" | debconf-set-selections && \
+    DEBIAN_FRONTEND=noninteractive dpkg-reconfigure dash
+
+RUN apt update -y && \
+    apt install -y python3 python3-pip && \
+    apt clean && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY . /spox
+WORKDIR /spox
+RUN pip install --no-cache-dir -r requirements.txt && \
+    pip install -e .
+
+# --mount type=bind,source=/path/to/config2.yaml,target=/spox/config/config2.yaml
+WORKDIR /spox
+ENTRYPOINT ["python3", "-m", "examples.spo.optimize"]
